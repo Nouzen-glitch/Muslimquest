@@ -1,0 +1,788 @@
+import React, { useState, useEffect } from 'react';
+import { Home, Calendar, BookOpen, Users, Trophy, Settings, Bell, User, ChevronRight, Star, CheckCircle, Clock, Play, Share2, MapPin, QrCode, Award, Target } from 'lucide-react';
+
+const IslamicIdentityApp = () => {
+  const [currentPage, setCurrentPage] = useState('home');
+  const [userLevel, setUserLevel] = useState(3);
+  const [userStage, setUserStage] = useState(1);
+  const [userExp, setUserExp] = useState(245);
+  const [maxExp, setMaxExp] = useState(500);
+  const [streak, setStreak] = useState(7);
+  const [selectedQuest, setSelectedQuest] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [completedQuests, setCompletedQuests] = useState(new Set([3]));
+  const [questProgress, setQuestProgress] = useState({
+    1: 66,
+    2: 33,
+    3: 100
+  });
+  const [registeredEvents, setRegisteredEvents] = useState(new Set());
+  const [notifications, setNotifications] = useState([
+    "Time for Maghrib prayer! 🌅",
+    "New community event added nearby",
+    "You're on a 7-day streak! Keep going! 🔥"
+  ]);
+
+  const stages = [
+    { name: "Foundation & Salah", color: "bg-green-500", completed: userStage > 1 },
+    { name: "Qur'an & Connection", color: "bg-blue-500", completed: userStage > 2 },
+    { name: "Charity & Discipline", color: "bg-purple-500", completed: userStage > 3 },
+    { name: "Spreading Good", color: "bg-orange-500", completed: userStage > 4 },
+    { name: "Community & Dawah", color: "bg-red-500", completed: userStage > 5 }
+  ];
+
+  const currentQuests = [
+    {
+      id: 1,
+      title: "Perform 3 daily salah on time",
+      description: "Continue building your prayer consistency. Prayer is the pillar of faith and connects you directly with Allah.",
+      reward: "50 XP",
+      type: "Prayer-Based",
+      difficulty: "Medium",
+      timeEstimate: "Throughout day",
+      tips: "Set prayer time notifications and find a quiet space for focus."
+    },
+    {
+      id: 2,
+      title: "Recite Ayat al-Kursi after prayer",
+      description: "Strengthen your connection with Allah through this powerful verse of protection and remembrance.",
+      reward: "30 XP",
+      type: "Qur'an Recitation",
+      difficulty: "Easy",
+      timeEstimate: "2 minutes",
+      tips: "Learn the meaning of Ayat al-Kursi to deepen your understanding."
+    },
+    {
+      id: 3,
+      title: "5 minutes quiet reflection",
+      description: "Reflect on your spiritual journey and how Allah has blessed you today.",
+      reward: "25 XP",
+      type: "Identity-Strengthening",
+      difficulty: "Easy",
+      timeEstimate: "5 minutes",
+      tips: "Find a peaceful place and think about your growth as a Muslim."
+    },
+    {
+      id: 4,
+      title: "Read 3 verses with translation",
+      description: "Understanding the Qur'an deepens your connection with Allah's guidance.",
+      reward: "40 XP",
+      type: "Learning & Study",
+      difficulty: "Medium",
+      timeEstimate: "10 minutes",
+      tips: "Use a reliable translation and take notes on what you learn."
+    }
+  ];
+
+  const upcomingEvents = [
+    {
+      id: 1,
+      title: "Youth Basketball Night",
+      masjid: "Al-Noor Community Center",
+      date: "Tonight, 7 PM",
+      attendees: 15,
+      ageGroup: "16-25",
+      fee: "Free",
+      description: "Join fellow Muslim youth for a fun basketball game followed by Maghrib prayer and light refreshments. A great opportunity to meet new friends and strengthen community bonds.",
+      address: "123 Main St, Cambridge",
+      contact: "519-123-4567"
+    },
+    {
+      id: 2,
+      title: "Qur'an Study Circle",
+      masjid: "Islamic Society",
+      date: "Tomorrow, 6 PM",
+      attendees: 8,
+      ageGroup: "18-30",
+      fee: "$5",
+      description: "Weekly Qur'an study session focusing on Surah Al-Baqarah. We'll explore the meanings, context, and practical applications in modern life.",
+      address: "456 University Ave, Cambridge",
+      contact: "519-987-6543"
+    },
+    {
+      id: 3,
+      title: "Community Iftar",
+      masjid: "Masjid Al-Huda",
+      date: "Friday, 7:30 PM",
+      attendees: 45,
+      ageGroup: "All ages",
+      fee: "Free",
+      description: "Join our community for a blessed iftar during Ramadan. Includes dinner, short reminder, and Maghrib prayer.",
+      address: "789 King St, Cambridge",
+      contact: "519-555-0123"
+    }
+  ];
+
+  const dailyHadith = "The Prophet (ﷺ) said: 'The believer who mixes with people and bears their annoyance with patience will have a greater reward than the believer who does not mix with people...' - Ibn Majah";
+
+  const learningContent = [
+    {
+      id: 1,
+      title: "Understanding Salah",
+      type: "Video",
+      duration: "15 min",
+      description: "Learn the deeper meanings behind our daily prayers",
+      category: "Worship"
+    },
+    {
+      id: 2,
+      title: "99 Names of Allah",
+      type: "Interactive",
+      duration: "10 min",
+      description: "Explore the beautiful names and attributes of Allah",
+      category: "Knowledge"
+    },
+    {
+      id: 3,
+      title: "Islamic Manners",
+      type: "Article",
+      duration: "8 min",
+      description: "Learn about adab and proper Islamic etiquette",
+      category: "Character"
+    }
+  ];
+
+  const communityFeatures = [
+    {
+      title: "Find Study Partners",
+      description: "Connect with other Muslims for Qur'an study",
+      icon: Users
+    },
+    {
+      title: "Local Prayer Times",
+      description: "Accurate prayer times for your location",
+      icon: Clock
+    },
+    {
+      title: "Share Progress",
+      description: "Inspire others with your journey",
+      icon: Share2
+    },
+    {
+      title: "Nearby Mosques",
+      description: "Find mosques and Islamic centers near you",
+      icon: MapPin
+    }
+  ];
+
+  const completeQuest = (questId) => {
+    if (!completedQuests.has(questId)) {
+      setCompletedQuests(new Set([...completedQuests, questId]));
+      setQuestProgress(prev => ({ ...prev, [questId]: 100 }));
+      
+      const quest = currentQuests.find(q => q.id === questId);
+      const expGain = parseInt(quest.reward.replace(' XP', ''));
+      setUserExp(prev => {
+        const newExp = prev + expGain;
+        if (newExp >= maxExp) {
+          setUserLevel(prevLevel => prevLevel + 1);
+          return newExp - maxExp;
+        }
+        return newExp;
+      });
+      
+      // Check if all quests completed to level up stage
+      if (completedQuests.size + 1 >= 3) { // Assuming 3 quests per stage
+        setTimeout(() => {
+          if (userStage < 5) {
+            setUserStage(prev => prev + 1);
+            setNotifications(prev => [...prev, `Congratulations! You've reached Stage ${userStage + 1}! 🎉`]);
+          }
+        }, 1000);
+      }
+    }
+  };
+
+  const registerForEvent = (eventId) => {
+    if (!registeredEvents.has(eventId)) {
+      setRegisteredEvents(new Set([...registeredEvents, eventId]));
+      const event = upcomingEvents.find(e => e.id === eventId);
+      setNotifications(prev => [...prev, `Successfully registered for ${event.title}! 📅`]);
+    }
+  };
+
+  const HomePage = () => (
+    <div className="space-y-6 p-4">
+      {/* Welcome Message */}
+      <div className="bg-gradient-to-r from-green-500 to-blue-600 text-white p-6 rounded-lg shadow-lg">
+        <h2 className="text-2xl font-bold mb-2">Assalamu Alaikum, Ahmad!</h2>
+        <p className="opacity-90">Remember, your identity is shaped by your daily actions. Every small step matters.</p>
+        <div className="mt-4 flex items-center space-x-4 text-sm">
+          <div className="flex items-center">
+            <Star className="w-4 h-4 mr-1" />
+            Level {userLevel}
+          </div>
+          <div className="flex items-center">
+            <CheckCircle className="w-4 h-4 mr-1" />
+            {streak} day streak
+          </div>
+        </div>
+      </div>
+
+      {/* Progress Overview */}
+      <div className="bg-white rounded-lg shadow-md p-4">
+        <h3 className="text-lg font-semibold mb-3 text-gray-800">Your Journey Progress</h3>
+        <div className="mb-4">
+          <div className="flex justify-between text-sm text-gray-600 mb-2">
+            <span>Stage {userStage}: {stages[userStage - 1]?.name}</span>
+            <span>{userExp}/{maxExp} XP</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-3">
+            <div 
+              className="bg-green-500 h-3 rounded-full transition-all duration-300"
+              style={{ width: `${(userExp / maxExp) * 100}%` }}
+            ></div>
+          </div>
+        </div>
+        
+        {/* Mastery Tree Visual */}
+        <div className="flex justify-center">
+          <div className="relative">
+            <div className="w-32 h-40 bg-gradient-to-t from-amber-600 to-green-400 rounded-t-full mx-auto relative">
+              {/* Tree trunk */}
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-6 h-16 bg-amber-800 rounded-b"></div>
+              
+              {/* Branches representing stages */}
+              {stages.map((stage, index) => (
+                <div
+                  key={index}
+                  className={`absolute w-4 h-4 rounded-full ${
+                    index < userStage ? stage.color : 'bg-gray-300'
+                  } border-2 border-white shadow-sm cursor-pointer hover:scale-110 transition-transform`}
+                  style={{
+                    top: `${15 + index * 15}%`,
+                    left: `${25 + (index % 2) * 50}%`
+                  }}
+                  title={stage.name}
+                ></div>
+              ))}
+              
+              {/* Leaves */}
+              <div className="absolute top-2 left-1/4 w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <div className="absolute top-4 right-1/4 w-2 h-2 bg-green-400 rounded-full animate-pulse" style={{animationDelay: '0.5s'}}></div>
+              <div className="absolute top-1 left-1/2 w-2 h-2 bg-green-400 rounded-full animate-pulse" style={{animationDelay: '1s'}}></div>
+            </div>
+            <p className="text-center text-sm text-gray-600 mt-2">Your Islamic Identity Tree</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Today's Hadith */}
+      <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+        <h3 className="font-semibold text-blue-800 mb-2">Daily Wisdom</h3>
+        <p className="text-blue-700 text-sm italic leading-relaxed">{dailyHadith}</p>
+        <button className="mt-2 text-blue-600 text-sm hover:underline flex items-center">
+          <Share2 className="w-3 h-3 mr-1" />
+          Share this wisdom
+        </button>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 gap-4">
+        <button 
+          onClick={() => setCurrentPage('quests')}
+          className="bg-white p-4 rounded-lg shadow-md border-2 border-green-100 hover:border-green-300 transition-colors"
+        >
+          <Trophy className="w-8 h-8 text-green-600 mb-2" />
+          <p className="font-semibold text-gray-800">Today's Quests</p>
+          <p className="text-sm text-gray-500">{currentQuests.length - completedQuests.size} remaining</p>
+        </button>
+        <button 
+          onClick={() => setCurrentPage('events')}
+          className="bg-white p-4 rounded-lg shadow-md border-2 border-blue-100 hover:border-blue-300 transition-colors"
+        >
+          <Calendar className="w-8 h-8 text-blue-600 mb-2" />
+          <p className="font-semibold text-gray-800">Local Events</p>
+          <p className="text-sm text-gray-500">{upcomingEvents.length} upcoming</p>
+        </button>
+      </div>
+    </div>
+  );
+
+  const QuestsPage = () => (
+    <div className="space-y-4 p-4">
+      {selectedQuest ? (
+        <QuestDetailView quest={selectedQuest} onBack={() => setSelectedQuest(null)} />
+      ) : (
+        <>
+          <div className="bg-gradient-to-r from-purple-500 to-pink-600 text-white p-4 rounded-lg">
+            <h2 className="text-xl font-bold mb-2">Today's Quests</h2>
+            <p className="text-sm opacity-90">Complete these to strengthen your Islamic identity</p>
+            <div className="mt-3 text-sm">
+              <span>Progress: {completedQuests.size}/{currentQuests.length} completed</span>
+            </div>
+          </div>
+
+          {currentQuests.map((quest) => (
+            <div key={quest.id} className="bg-white rounded-lg shadow-md p-4 border-l-4 border-blue-500">
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-800 mb-1">{quest.title}</h3>
+                  <p className="text-sm text-gray-600 mb-2 line-clamp-2">{quest.description}</p>
+                  <div className="flex items-center space-x-2 text-xs text-gray-500 mb-2">
+                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">{quest.type}</span>
+                    <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded">{quest.difficulty}</span>
+                    <span className="flex items-center">
+                      <Clock className="w-3 h-3 mr-1" />
+                      {quest.timeEstimate}
+                    </span>
+                  </div>
+                  <div className="flex items-center text-xs text-gray-500">
+                    <Star className="w-3 h-3 mr-1" />
+                    {quest.reward}
+                  </div>
+                </div>
+                <div className="ml-4">
+                  {completedQuests.has(quest.id) ? (
+                    <CheckCircle className="w-6 h-6 text-green-500" />
+                  ) : (
+                    <div className="w-6 h-6 border-2 border-gray-300 rounded-full"></div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="mb-3">
+                <div className="flex justify-between text-xs text-gray-600 mb-1">
+                  <span>Progress</span>
+                  <span>{questProgress[quest.id] || 0}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      completedQuests.has(quest.id) ? 'bg-green-500' : 'bg-blue-500'
+                    }`}
+                    style={{ width: `${questProgress[quest.id] || 0}%` }}
+                  ></div>
+                </div>
+              </div>
+              
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => setSelectedQuest(quest)}
+                  className="flex-1 py-2 px-4 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
+                >
+                  View Details
+                </button>
+                <button 
+                  onClick={() => completeQuest(quest.id)}
+                  className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
+                    completedQuests.has(quest.id) 
+                      ? 'bg-green-100 text-green-800 cursor-default' 
+                      : 'bg-blue-500 text-white hover:bg-blue-600'
+                  }`}
+                  disabled={completedQuests.has(quest.id)}
+                >
+                  {completedQuests.has(quest.id) ? 'Completed!' : 'Mark Complete'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+    </div>
+  );
+
+  const QuestDetailView = ({ quest, onBack }) => (
+    <div className="space-y-4">
+      <div className="flex items-center mb-4">
+        <button onClick={onBack} className="mr-3 p-2 hover:bg-gray-100 rounded-lg">
+          <ChevronRight className="w-5 h-5 rotate-180" />
+        </button>
+        <h2 className="text-xl font-bold text-gray-800">Quest Details</h2>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex justify-between items-start mb-4">
+          <h3 className="text-xl font-semibold text-gray-800">{quest.title}</h3>
+          {completedQuests.has(quest.id) ? (
+            <CheckCircle className="w-8 h-8 text-green-500" />
+          ) : (
+            <div className="w-8 h-8 border-2 border-gray-300 rounded-full"></div>
+          )}
+        </div>
+
+        <p className="text-gray-600 mb-4 leading-relaxed">{quest.description}</p>
+
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <div>
+            <p className="text-sm text-gray-500 mb-1">Reward</p>
+            <p className="font-semibold text-blue-600">{quest.reward}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 mb-1">Difficulty</p>
+            <p className="font-semibold text-orange-600">{quest.difficulty}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 mb-1">Time Estimate</p>
+            <p className="font-semibold text-gray-700">{quest.timeEstimate}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 mb-1">Category</p>
+            <p className="font-semibold text-purple-600">{quest.type}</p>
+          </div>
+        </div>
+
+        <div className="bg-blue-50 p-4 rounded-lg mb-6">
+          <h4 className="font-semibold text-blue-800 mb-2">💡 Tips for Success</h4>
+          <p className="text-blue-700 text-sm">{quest.tips}</p>
+        </div>
+
+        <div className="mb-6">
+          <div className="flex justify-between text-sm text-gray-600 mb-2">
+            <span>Progress</span>
+            <span>{questProgress[quest.id] || 0}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-3">
+            <div 
+              className={`h-3 rounded-full transition-all duration-300 ${
+                completedQuests.has(quest.id) ? 'bg-green-500' : 'bg-blue-500'
+              }`}
+              style={{ width: `${questProgress[quest.id] || 0}%` }}
+            ></div>
+          </div>
+        </div>
+
+        <button 
+          onClick={() => completeQuest(quest.id)}
+          className={`w-full py-3 px-4 rounded-lg text-sm font-medium transition-colors ${
+            completedQuests.has(quest.id) 
+              ? 'bg-green-100 text-green-800 cursor-default' 
+              : 'bg-blue-500 text-white hover:bg-blue-600'
+          }`}
+          disabled={completedQuests.has(quest.id)}
+        >
+          {completedQuests.has(quest.id) ? '✅ Quest Completed!' : 'Mark as Complete'}
+        </button>
+      </div>
+    </div>
+  );
+
+  const EventsPage = () => (
+    <div className="space-y-4 p-4">
+      {selectedEvent ? (
+        <EventDetailView event={selectedEvent} onBack={() => setSelectedEvent(null)} />
+      ) : (
+        <>
+          <div className="bg-gradient-to-r from-orange-500 to-red-600 text-white p-4 rounded-lg">
+            <h2 className="text-xl font-bold mb-2">Local Events</h2>
+            <p className="text-sm opacity-90">Connect with your community</p>
+            <div className="mt-3 flex items-center text-sm">
+              <MapPin className="w-4 h-4 mr-1" />
+              Cambridge, ON
+            </div>
+          </div>
+
+          {upcomingEvents.map((event) => (
+            <div key={event.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="p-4">
+                <h3 className="font-semibold text-gray-800 mb-2">{event.title}</h3>
+                <p className="text-sm text-gray-600 mb-2">{event.masjid}</p>
+                
+                <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
+                  <div className="flex items-center">
+                    <Clock className="w-4 h-4 mr-1" />
+                    {event.date}
+                  </div>
+                  <div className="flex items-center">
+                    <Users className="w-4 h-4 mr-1" />
+                    {event.attendees} attending
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-2 mb-4">
+                  <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                    Ages {event.ageGroup}
+                  </span>
+                  <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                    {event.fee}
+                  </span>
+                  {registeredEvents.has(event.id) && (
+                    <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">
+                      ✓ Registered
+                    </span>
+                  )}
+                </div>
+                
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => setSelectedEvent(event)}
+                    className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                  >
+                    View Details
+                  </button>
+                  <button 
+                    onClick={() => registerForEvent(event.id)}
+                    className={`flex-1 py-2 px-4 rounded-lg transition-colors text-sm ${
+                      registeredEvents.has(event.id)
+                        ? 'bg-purple-100 text-purple-800 cursor-default'
+                        : 'bg-orange-500 text-white hover:bg-orange-600'
+                    }`}
+                    disabled={registeredEvents.has(event.id)}
+                  >
+                    {registeredEvents.has(event.id) ? 'Registered!' : 'Register'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+    </div>
+  );
+
+  const EventDetailView = ({ event, onBack }) => (
+    <div className="space-y-4">
+      <div className="flex items-center mb-4">
+        <button onClick={onBack} className="mr-3 p-2 hover:bg-gray-100 rounded-lg">
+          <ChevronRight className="w-5 h-5 rotate-180" />
+        </button>
+        <h2 className="text-xl font-bold text-gray-800">Event Details</h2>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-2xl font-semibold text-gray-800 mb-2">{event.title}</h3>
+        <p className="text-lg text-blue-600 mb-4">{event.masjid}</p>
+        
+        <p className="text-gray-600 mb-6 leading-relaxed">{event.description}</p>
+
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <div>
+            <p className="text-sm text-gray-500 mb-1">Date & Time</p>
+            <p className="font-semibold text-gray-700">{event.date}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 mb-1">Fee</p>
+            <p className="font-semibold text-green-600">{event.fee}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 mb-1">Age Group</p>
+            <p className="font-semibold text-blue-600">{event.ageGroup}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 mb-1">Attendees</p>
+            <p className="font-semibold text-orange-600">{event.attendees} registered</p>
+          </div>
+        </div>
+
+        <div className="bg-gray-50 p-4 rounded-lg mb-6">
+          <h4 className="font-semibold text-gray-800 mb-2">📍 Location</h4>
+          <p className="text-gray-600">{event.address}</p>
+          <p className="text-gray-600">📞 {event.contact}</p>
+        </div>
+
+        <div className="flex gap-3">
+          <button 
+            onClick={() => registerForEvent(event.id)}
+            className={`flex-1 py-3 px-4 rounded-lg transition-colors font-medium ${
+              registeredEvents.has(event.id)
+                ? 'bg-purple-100 text-purple-800 cursor-default'
+                : 'bg-orange-500 text-white hover:bg-orange-600'
+            }`}
+            disabled={registeredEvents.has(event.id)}
+          >
+            {registeredEvents.has(event.id) ? '✅ Registered!' : 'Register for Event'}
+          </button>
+          <button className="px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+            <Share2 className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const LearnPage = () => (
+    <div className="space-y-4 p-4">
+      <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4 rounded-lg">
+        <h2 className="text-xl font-bold mb-2">Learn & Grow</h2>
+        <p className="text-sm opacity-90">Strengthen your Islamic knowledge</p>
+      </div>
+
+      {learningContent.map((content) => (
+        <div key={content.id} className="bg-white rounded-lg shadow-md p-4">
+          <div className="flex justify-between items-start mb-3">
+            <div className="flex-1">
+              <h3 className="font-semibold text-gray-800 mb-1">{content.title}</h3>
+              <p className="text-sm text-gray-600 mb-2">{content.description}</p>
+              <div className="flex items-center space-x-2 text-xs text-gray-500">
+                <span className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded">{content.category}</span>
+                <span className="flex items-center">
+                  <Clock className="w-3 h-3 mr-1" />
+                  {content.duration}
+                </span>
+              </div>
+            </div>
+            <Play className="w-6 h-6 text-blue-500 ml-4" />
+          </div>
+          
+          <button className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors">
+            Start Learning
+          </button>
+        </div>
+      ))}
+
+      <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+        <h3 className="font-semibold text-yellow-800 mb-2">🎯 Weekly Challenge</h3>
+        <p className="text-yellow-700 text-sm mb-3">Learn the meaning of 3 new Arabic words from the Qur'an this week</p>
+        <div className="flex justify-between items-center">
+          <span className="text-xs text-yellow-600">Progress: 1/3</span>
+          <button className="bg-yellow-500 text-white px-3 py-1 rounded text-xs hover:bg-yellow-600 transition-colors">
+            Accept Challenge
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const CommunityPage = () => (
+    <div className="space-y-4 p-4">
+      <div className="bg-gradient-to-r from-purple-500 to-pink-600 text-white p-4 rounded-lg">
+        <h2 className="text-xl font-bold mb-2">Community</h2>
+        <p className="text-sm opacity-90">Connect with fellow Muslims</p>
+      </div>
+
+      {communityFeatures.map((feature, index) => {
+        const Icon = feature.icon;
+        return (
+          <div key={index} className="bg-white rounded-lg shadow-md p-4">
+            <div className="flex items-center mb-3">
+              <div className="p-3 bg-purple-100 rounded-lg mr-4">
+                <Icon className="w-6 h-6 text-purple-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-800 mb-1">{feature.title}</h3>
+                <p className="text-sm text-gray-600">{feature.description}</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-400" />
+            </div>
+            
+            <button className="w-full bg-purple-500 text-white py-2 px-4 rounded-lg hover:bg-purple-600 transition-colors">
+              Explore
+            </button>
+          </div>
+        );
+      })}
+
+      <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
+        <h3 className="font-semibold text-green-800 mb-2">🌟 Community Leaderboard</h3>
+        <div className="space-y-2">
+          <div className="flex justify-between items-center py-2">
+            <div className="flex items-center">
+              <span className="w-6 h-6 bg-yellow-500 text-white text-xs font-bold rounded-full flex items-center justify-center mr-3">1</span>
+              <span className="font-medium">Fatima A.</span>
+            </div>
+            <span className="text-sm text-gray-600">2,450 XP</span>
+          </div>
+          <div className="flex justify-between items-center py-2">
+            <div className="flex items-center">
+              <span className="w-6 h-6 bg-gray-400 text-white text-xs font-bold rounded-full flex items-center justify-center mr-3">2</span>
+              <span className="font-medium">Omar K.</span>
+            </div>
+            <span className="text-sm text-gray-600">2,180 XP</span>
+          </div>
+          <div className="flex justify-between items-center py-2 bg-green-100 px-2 rounded">
+            <div className="flex items-center">
+              <span className="w-6 h-6 bg-amber-600 text-white text-xs font-bold rounded-full flex items-center justify-center mr-3">3</span>
+              <span className="font-medium">You (Ahmad)</span>
+            </div>
+            <span className="text-sm text-gray-600">1,890 XP</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderCurrentPage = () => {
+    switch (currentPage) {
+      case 'home':
+        return <HomePage />;
+      case 'quests':
+        return <QuestsPage />;
+      case 'events':
+        return <EventsPage />;
+      case 'learn':
+        return <LearnPage />;
+      case 'community':
+        return <CommunityPage />;
+      default:
+        return <HomePage />;
+    }
+  };
+
+  return (
+    <div className="max-w-md mx-auto bg-gray-50 min-h-screen">
+      {/* Top Toolbar */}
+      <div className="bg-white shadow-sm p-4 flex items-center justify-between sticky top-0 z-10">
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+              A
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-800">Ahmad</p>
+              <p className="text-xs text-gray-500">🔥 {streak} days</p>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center space-x-3">
+          <div className="relative">
+            <Bell className="w-5 h-5 text-gray-600 cursor-pointer hover:text-gray-800 transition-colors" />
+            {notifications.length > 0 && (
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full text-xs flex items-center justify-center text-white">
+                {notifications.length}
+              </span>
+            )}
+          </div>
+          <Settings className="w-5 h-5 text-gray-600 cursor-pointer hover:text-gray-800 transition-colors" />
+        </div>
+      </div>
+
+      {/* Notifications Panel (if clicked) */}
+      {notifications.length > 0 && (
+        <div className="bg-blue-50 border-b border-blue-200 p-3">
+          <div className="text-sm text-blue-800">
+            <Bell className="w-4 h-4 inline mr-2" />
+            {notifications[notifications.length - 1]}
+          </div>
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className="pb-20">
+        {renderCurrentPage()}
+      </div>
+
+      {/* Bottom Navigation */}
+      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200">
+        <div className="flex justify-around py-3">
+          {[
+            { icon: Home, label: 'Home', page: 'home' },
+            { icon: Trophy, label: 'Quests', page: 'quests' },
+            { icon: Calendar, label: 'Events', page: 'events' },
+            { icon: BookOpen, label: 'Learn', page: 'learn' },
+            { icon: Users, label: 'Community', page: 'community' }
+          ].map(({ icon: Icon, label, page }) => (
+            <button
+              key={page}
+              onClick={() => setCurrentPage(page)}
+              className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-colors ${
+                currentPage === page 
+                  ? 'text-blue-600 bg-blue-50' 
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <Icon className="w-5 h-5" />
+              <span className="text-xs">{label}</span>
+              {page === 'quests' && currentQuests.length - completedQuests.size > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
+                  {currentQuests.length - completedQuests.size}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default IslamicIdentityApp;
